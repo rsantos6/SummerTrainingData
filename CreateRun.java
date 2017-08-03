@@ -16,7 +16,7 @@ public class CreateRun {
 	public static void main(String [] args) {
 		ArrayList<Run> runList = scanFile("");
 
-		System.out.print("Enter a command: ");
+		System.out.print("Enter a command (enter 'help' to see all commands): ");
 		Scanner input = new Scanner(System.in);
 		String instructions = input.nextLine();
 		while (!instructions.equals("quit")) {
@@ -27,14 +27,29 @@ public class CreateRun {
 				
 			} else if (instructions.contains("read")) {
 				runList = scanFile(instructions);
+			} else if (instructions.contains("help")) {
+				printPossibleCommands();
 			} else {
-				System.out.println("That command is not recognized...");
+				System.out.println("That command is not recognized. Enter 'help' to see all commands" );
 			}
 			System.out.print("Enter a command: ");
 			instructions = input.nextLine();
 		}
 		System.out.println("good-bye");
 
+	}
+
+	public static void printPossibleCommands() {
+		System.out.println("");
+		System.out.println("The possible commands are: ");
+		System.out.println("");
+		System.out.println("quit *ends program*");
+		System.out.println("print (show) all *prints all run data*");
+		System.out.println("average (usual) pace *prints average pace over all runs*");
+		System.out.println("average (usual) pace Monday, Tuesday... *prints average pace for that day of the week*");
+		System.out.println("average (usual) distance *prints average distance over all runs*");
+		System.out.println("average (usual) distance Monday, Tuesday... *prints average distance for that day of the week*");
+		System.out.println("");
 	}
 
 	public static void printAllRuns (ArrayList<Run> runList) {
@@ -45,7 +60,7 @@ public class CreateRun {
 
 	public static void getAverage (ArrayList<Run> runList, String instructions) {
 		if (instructions.contains("pace")) {
-			paceRouter(runList);
+			paceRouter(runList, instructions);
 		} else if (instructions.contains("distance")) {
 			distanceRouter(runList, instructions);
 		} else if (instructions.contains("time")) {
@@ -55,25 +70,67 @@ public class CreateRun {
 		}
 	}
 
-	public static void paceRouter (ArrayList<Run> runList) {
-		int count = 0;
-		int sumSeconds = 0;
-		for (int i = 0; i < runList.size(); i++) {
-			count ++;
-			String[] hourMin = runList.get(i).getPace().split(":");
-			sumSeconds += Integer.parseInt(hourMin[0]) * 60;
-			if (hourMin[1].substring(0,1).equals("0")){
-				sumSeconds += Integer.parseInt(hourMin[1].substring(1));
-			} else {
-				sumSeconds += Integer.parseInt(hourMin[1]);
+	public static void paceRouter (ArrayList<Run> runList, String instructions) {
+		instructions = instructions.toLowerCase();
+		if (instructions.contains("monday") || (instructions.contains("tuesday")) || (instructions.contains("wednesday")) || (instructions.contains("thursday")) || (instructions.contains("friday")) || (instructions.contains("saturday")) || (instructions.contains("sunday"))){
+			averageSpecificDayPace(runList, instructions);
+		} else {
+			int count = 0;
+			int sumSeconds = 0;
+			for (int i = 0; i < runList.size(); i++) {
+				count ++;
+				String[] hourMin = runList.get(i).getPace().split(":");
+				sumSeconds += Integer.parseInt(hourMin[0]) * 60;
+				if (hourMin[1].substring(0,1).equals("0")){
+					sumSeconds += Integer.parseInt(hourMin[1].substring(1));
+				} else {
+					sumSeconds += Integer.parseInt(hourMin[1]);
+				}
 			}
+
+			int avgSeconds = sumSeconds / count;
+			int minutes = avgSeconds/60;
+			int seconds = avgSeconds%60;
+
+			if (seconds < 10) {
+				System.out.println("On average your pace is " + minutes + ":0" + seconds + " per mile");
+			} else {
+				System.out.println("On average your pace is " + minutes + ":" + seconds + " per mile");
+			}
+			
 		}
+	}
 
-		int avgSeconds = sumSeconds / count;
-		int minutes = avgSeconds/60;
-		int seconds = avgSeconds%60;
+	public static void averageSpecificDayPace(ArrayList<Run> runList, String instructions) {
+		String day = whichDay(instructions);
+		int count = 0;
+			int sumSeconds = 0;
+			for (int i = 0; i < runList.size(); i++) {
+				if (runList.get(i).getDay().equals(day)) {
+					count ++;
+					String[] hourMin = runList.get(i).getPace().split(":");
+					sumSeconds += Integer.parseInt(hourMin[0]) * 60;
+					if (hourMin[1].substring(0,1).equals("0")){
+						sumSeconds += Integer.parseInt(hourMin[1].substring(1));
+					} else {
+						sumSeconds += Integer.parseInt(hourMin[1]);
+					}
+				}
+				
+			}
 
-		System.out.println("Your average pace is " + minutes + ":" + seconds + " per mile");
+			int avgSeconds = sumSeconds / count;
+			int minutes = avgSeconds/60;
+			int seconds = avgSeconds%60;
+
+			if (seconds < 10) {
+				System.out.println("Your pace on " + day + "s is usually " + minutes + ":0" + seconds + " per mile");
+			} else {
+				System.out.println("Your pace on " + day + "s is usually " + minutes + ":" + seconds + " per mile");
+			}
+
+			
+
 	}
 
 	public static void averageTime (ArrayList<Run> runList) {
@@ -81,7 +138,8 @@ public class CreateRun {
 	}
 
 	public static void distanceRouter (ArrayList<Run> runList, String instructions) {
-		if (instructions.contains("Monday") || (instructions.contains("Tuesday")) || (instructions.contains("Wednesday")) || (instructions.contains("Thursday")) || (instructions.contains("Friday")) || (instructions.contains("Saturday")) || (instructions.contains("Sunday"))){
+		instructions = instructions.toLowerCase();
+		if (instructions.contains("monday") || (instructions.contains("tuesday")) || (instructions.contains("wednesday")) || (instructions.contains("thursday")) || (instructions.contains("friday")) || (instructions.contains("saturday")) || (instructions.contains("sunday"))){
 			averageSpecificDayDistance(runList, instructions);
 		} else {
 			double count = 0;
@@ -91,27 +149,12 @@ public class CreateRun {
 				sum += Double.parseDouble(runList.get(i).getDistance());
 			}
 			double average = Math.round((sum / count) * 100.0) / 100.0;
-			System.out.println("Your average distance ran is: " + average + " miles");
+			System.out.println("On average you run: " + average + " miles");
 		}
 	}
 
 	public static void averageSpecificDayDistance (ArrayList<Run> runList, String instructions) {
-		String day = "";
-		if (instructions.contains("Monday")) {
-			day = "Monday";
-		} else if (instructions.contains("Tuesday")) {
-			day = "Tuesday";
-		} else if (instructions.contains("Wednesday")) {
-			day = "Wednesday";
-		} else if (instructions.contains("Thursday")) {
-			day = "Thursday";
-		} else if (instructions.contains("Friday")) {
-			day = "Friday";
-		} else if (instructions.contains("Saturday")) {
-			day = "Saturday";
-		} else if (instructions.contains("Sunday")) {
-			day = "Sunday";
-		}
+		String day = whichDay(instructions);
 
 		double count = 0;
 		double sum = 0;
@@ -154,6 +197,26 @@ public class CreateRun {
 
 		System.out.println("File read");
 		return runList;
+	}
+
+	public static String whichDay(String instructions) {
+		if (instructions.contains("monday")) {
+			return "Monday";
+		} else if (instructions.contains("tuesday")) {
+			return "Tuesday";
+		} else if (instructions.contains("wednesday")) {
+			return "Wednesday";
+		} else if (instructions.contains("thursday")) {
+			return "Thursday";
+		} else if (instructions.contains("friday")) {
+			return "Friday";
+		} else if (instructions.contains("saturday")) {
+			return "Saturday";
+		} else if (instructions.contains("sunday")) {
+			return "Sunday";
+		} else {
+			return null;
+		}
 	}
 
 }
